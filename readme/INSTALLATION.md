@@ -1,6 +1,3 @@
-This module depends on `{dependency_repo_name}`. You can find it at [{dependency_user_name}/{dependency_repo_name}](https://github.com/{dependency_user_name}/{dependency_repo_name})
+This is a technical module. It's intended to be used by developers, or at least, by people with a basic understanding of how xml views are declared in Odoo.
 
-
-To install this module, you need to:
-
-1. {...}
+To start using it, just move it to your addons folder, and install the module.
