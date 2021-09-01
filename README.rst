@@ -1,3 +1,9 @@
+.. image:: static/description/alliantum.png
+   :alt: Alliantum
+   :width: 100 %
+   :scale: 70 %
+   :align: center
+
 ================================
 Insert Lines at Certain Position
 ================================
@@ -18,6 +24,7 @@ Insert Lines at Certain Position
     :alt: Alliantum/odoo_insert_line_position
 
 |badge1| |badge2| |badge3| 
+
 
 
 This module allows you to insert lines at any position in your list
