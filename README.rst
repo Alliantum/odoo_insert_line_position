@@ -20,7 +20,7 @@ Insert Lines at Certain Position
     :target: http://www.gnu.org/licenses/agpl-3.0-standalone.html
     :alt: License: AGPL-3
 .. |badge3| image:: https://shields.io/badge/Alliantum%2fodoo_insert_line_position-24c3f3?style=for-the-badge&logo=github&label=github
-    :target: https://github.com/Alliantum/odoo_insert_line_position/tree/master/odoo_insert_line_position
+    :target: https://github.com/Alliantum/odoo_insert_line_position/tree/master
     :alt: Alliantum/odoo_insert_line_position
 
 |badge1| |badge2| |badge3| 
