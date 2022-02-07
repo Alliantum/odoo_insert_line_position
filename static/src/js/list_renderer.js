@@ -56,10 +56,26 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
             return !nextInsertFound;
         },
 
+        _getRecordID: function (rowIndex) {
+            var $tr = this.$('table.o_list_table > tbody > tr').not('.all_insert_row').eq(rowIndex);
+            return $tr.data('id');
+        },
+
+        // _getRow: function (recordId) {
+        //     return this.$('.o_data_row[data-id="' + recordId + '"]');
+        // },
+
         editRecord: function (recordID) {
             // And we need this, to focus edition on the new created line, at the correct position
-            var rowIndex = this.nextIndex || _.findIndex(this.state.data, {id: recordID});
-            this._selectCell(rowIndex, 0);
+            var rowIndex;
+            if (this.nextIndex) {
+                // rowIndex = this.nextIndex + 2;
+                rowIndex = this.nextIndex;
+            } else {
+                var $row = this._getRow(recordID);
+                rowIndex = $row.prop('rowIndex') - 1;
+            }
+            return this._selectCell(rowIndex, 0);
         },
 
         _onInsertLine: function (ev) {
@@ -67,7 +83,7 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
             ev.stopPropagation();
             var context = ev.currentTarget.dataset.context && ev.currentTarget.dataset.context || {};
             if (this.renderInsertLine && ev.currentTarget.dataset.nextIndex) {
-                // We save the nextIndex as a class variable. It will be used by the list_editable_rederer.js.
+                // We save the nextIndex as a class variable. It will be used by the list_editable_renderer.js.
                 // Also this value in the context too, so ca be read by the basic_model.js
                 context.index = this.nextIndex = parseInt(ev.currentTarget.dataset.nextIndex);
                 if (ev.currentTarget.dataset.handleField) {
@@ -175,7 +191,7 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
             // store the cursor position to restore it once potential onchanges have
             // been applied
             var currentRowID, currentWidget, focusedElement, selectionRange;
-            if (self.currentRow !== null) {
+            if (this.currentRow !== null) {
                 currentRowID = this.state.data[this.currentRow].id;
                 currentWidget = this.allFieldWidgets[currentRowID][this.currentFieldIndex];
                 if (currentWidget) {
