@@ -104,9 +104,9 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
         },
 
         _renderInsertRow: function (record, i) {
-            // When creating a new record, for example a SO with many lines inside, before save that SO those lines will have all the same sequence,
-            // and we don't want this because, if someone insert a line, and all the lines have the same sequence,
-            // our lines will lost their position and will go to the button becase have bigger sequence
+            // When creating a new record, for example a SO with many lines inside, before saving it, its lines will have all the same sequence
+            // and we don't want this, because if someone insert a line, and all the lines have the same sequence,
+            // that line will lost its position and will go to the bottom because of having a bigger sequence.
             if (!this.parent.res_id && !this.initialSequenceReset) {
                 var rows = this.state.data;
                 var order = _.findWhere(this.state.orderedBy, {name: this.handleField});
@@ -125,17 +125,19 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
                 });
                 this.initialSequenceReset = true;
             }
-            let $tr;
-            const self = this;
-            if ( self.renderInsertLine ) {
+            var $tr;
+            if ( this.renderInsertLine ) {
                 // Adding the "Insert Line" element
-                const $td = $('<td/>', {
+                var $td = $('<td/>', {
                     class: 'all_insert_cell',
                     colspan: '99',
                     'data-next-index': i + 1,
-                    'data-handle-field': self.hasHandle && self.handleField || '',
-                    'data-sequence': self.hasHandle && record.data[self.handleField]
-                }).append($("<div style='width: 1rem; display: inline-block' ><i class='fa fa-arrow-right all_insert_cell_icon' /></div>"), $("<span class='all_insert_cell_text' />").text(_t("Insert Line")))
+                    'data-handle-field': this.hasHandle && this.handleField || '',
+                    'data-sequence': this.hasHandle && record.data[this.handleField]
+                }).append(
+                    $("<div style='width: 1rem; display: inline-block' ><i class='fa fa-arrow-right all_insert_cell_icon' /></div>"),
+                    $("<span class='all_insert_cell_text' />").text(_t("Insert Line"))
+                );
 
                 $tr = $('<tr/>', { class: 'all_insert_row'})
                     .data('id', record.id)
@@ -147,19 +149,17 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
         },
 
         _renderRows: function () {
-            var self = this;
-            let $rows = [];
+            var $rows = [];
             for (const [i, record] of this.state.data.entries()) {
+                $rows.push(this._renderRow(record));
                 if (this.renderInsertLine) {
-                    $rows.push(this._renderRow(record), this._renderInsertRow(record, i));
-                } else {
-                    $rows.push(this._renderRow(record));
+                    $rows.push(this._renderInsertRow(record, i));
                 }
             }
 
             if (this.addCreateLine) {
                 var $tr = $('<tr>');
-                var colspan = self._getNumberOfCols();
+                var colspan = this._getNumberOfCols();
 
                 if (this.handleField) {
                     colspan = colspan - 1;
@@ -172,97 +172,105 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
                 $tr.append($td);
                 $rows.push($tr);
 
-                _.each(self.creates, function (create, index) {
-                    var $a = $('<a href="#" role="button">')
-                        .attr('data-context', create.context)
-                        .text(create.string);
-                    if (index > 0) {
-                        $a.addClass('ml16');
-                    }
-                    $td.append($a);
-                });
+                if (this.addCreateLine) {
+                    _.each(this.creates, function (create, index) {
+                        var $a = $('<a href="#" role="button">')
+                            .attr('data-context', create.context)
+                            .text(create.string);
+                        if (index > 0) {
+                            $a.addClass('ml16');
+                        }
+                        $td.append($a);
+                    });
+                }
             }
             return $rows;
         },
 
         confirmUpdate: function (state, id, fields, ev) {
+            /*
+            * In this method we have added our rows with class '.all_insert_row' inside the logic, but for the rest is the same original method
+            */
             var self = this;
 
-            // store the cursor position to restore it once potential onchanges have
-            // been applied
-            var currentRowID, currentWidget, focusedElement, selectionRange;
-            if (this.currentRow !== null) {
-                currentRowID = this.state.data[this.currentRow].id;
-                currentWidget = this.allFieldWidgets[currentRowID][this.currentFieldIndex];
-                if (currentWidget) {
-                    focusedElement = currentWidget.getFocusableElement().get(0);
-                    if (currentWidget.formatType !== 'boolean') {
-                        selectionRange = dom.getSelectionRange(focusedElement);
-                    }
-                }
-            }
-
             var oldData = this.state.data;
-            this.state = state;
+            this._setState(state);
             return this.confirmChange(state, id, fields, ev).then(function () {
                 // If no record with 'id' can be found in the state, the
                 // confirmChange method will have rerendered the whole view already,
                 // so no further work is necessary.
-                var record = _.findWhere(state.data, {id: id});
+                var record = self._getRecord(id);
                 if (!record) {
                     return;
                 }
-                var oldRowIndex = _.findIndex(oldData, {id: id});
-                var $row = self.$('.o_data_row:nth(' + oldRowIndex + ')');
-                $row.nextAll('.o_data_row').remove();
-                if (self.renderInsertLine) {
-                    // Remove here also our old insert lines, but not the one for the changed one!
-                    $row.next().nextAll('.o_data_row').remove();
-                }
-                $row.prevAll().remove();
+
                 _.each(oldData, function (rec) {
                     if (rec.id !== id) {
                         self._destroyFieldWidgets(rec.id);
                     }
                 });
-                var newRowIndex = _.findIndex(state.data, {id: id});
-                var $lastRow = !self.renderInsertLine ? $row : $row.next(); // The next row here in our case is the "insert" line
-                _.each(state.data, function (record, index) {
-                    if (index === newRowIndex) {
-                        return;
-                    }
-                    var $newRow = self._renderRow(record);
-                    if (index < newRowIndex) {
-                        $newRow.insertBefore($row);
-                    } else {
-                        $newRow.insertAfter($lastRow);
-                        $lastRow = $newRow;
-                    }
-                    // Just when the list is ready to work with insertion
-                    if (self.renderInsertLine) {
-                        var $newInsertRow = self._renderInsertRow(record, index);
-                        // And insert our new insert line always after the lines that we're adding here from scratch
-                        $newInsertRow.insertAfter($newRow);
-                        if (index > newRowIndex) {
-                            $lastRow = $newInsertRow;
-                        }
-                    }
-                });
-                if (self.currentRow !== null) {
-                    self.currentRow = newRowIndex;
-                    return self._selectCell(newRowIndex, self.currentFieldIndex, {force: true}).then(function () {
-                        // restore the cursor position
-                        currentRowID = self.state.data[newRowIndex].id;
+
+                // re-render whole body (outside the dom)
+                self.defs = [];
+                var $newBody = self._renderBody();
+                var defs = self.defs;
+                delete self.defs;
+
+                return Promise.all(defs).then(function () {
+                    // update registered modifiers to edit 'mode' because the call to
+                    // _renderBody set baseModeByRecord as 'readonly'
+                    _.each(self.columns, function (node) {
+                        self._registerModifiers(node, record, null, {mode: 'edit'});
+                    });
+
+                    // store the selection range to restore it once the table will
+                    // be re-rendered, and the current cell re-selected
+                    var currentRowID;
+                    var currentWidget;
+                    var focusedElement;
+                    var selectionRange;
+                    if (self.currentRow !== null) {
+                        currentRowID = self._getRecordID(self.currentRow);
                         currentWidget = self.allFieldWidgets[currentRowID][self.currentFieldIndex];
                         if (currentWidget) {
                             focusedElement = currentWidget.getFocusableElement().get(0);
-                            if (selectionRange) {
-                                dom.setSelectionRange(focusedElement, selectionRange);
+                            if (currentWidget.formatType !== 'boolean' && focusedElement) {
+                                selectionRange = dom.getSelectionRange(focusedElement);
                             }
                         }
+                    }
+
+                    // remove all data rows except the one being edited, and insert
+                    // data rows of the re-rendered body before and after it
+                    var $editedRow = self._getRow(id);
+                    $editedRow.nextAll('.o_data_row, .all_insert_row').remove();
+                    $editedRow.prevAll('.o_data_row, .all_insert_row').remove();
+                    var $newRow = $newBody.find('.o_data_row[data-id="' + id + '"]');
+                    $newRow.prevAll('.o_data_row, .all_insert_row').get().reverse().forEach(function (row) {
+                        $(row).insertBefore($editedRow);
                     });
-                }
+                    $newRow.nextAll('.o_data_row, .all_insert_row').get().reverse().forEach(function (row) {
+                        $(row).insertAfter($editedRow);
+                    });
+
+                    if (self.currentRow !== null) {
+                        var newRowIndex = $editedRow.prop('rowIndex') - 1;
+                        self.currentRow = newRowIndex;
+                        return self._selectCell(newRowIndex, self.currentFieldIndex, {force: true})
+                            .then(function () {
+                                // restore the selection range
+                                currentWidget = self.allFieldWidgets[currentRowID][self.currentFieldIndex];
+                                if (currentWidget) {
+                                    focusedElement = currentWidget.getFocusableElement().get(0);
+                                    if (selectionRange) {
+                                        dom.setSelectionRange(focusedElement, selectionRange);
+                                    }
+                                }
+                            });
+                    }
+                });
             });
         },
+
     });
 });
