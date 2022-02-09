@@ -32,22 +32,32 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
         },
 
         _onHoverRowEnter: function (ev) {
-            if (this.renderInsertLine && ev.currentTarget.nextSibling && !this._isLastInsertRow(ev.currentTarget) &&  ev.currentTarget.nextSibling.firstChild) {
+            if (
+                this.renderInsertLine &&
+                ev.currentTarget.nextSibling &&
+                ev.currentTarget.nextSibling.firstChild &&
+                !this._isLastInsertRow(ev.currentTarget)
+            ) {
                 ev.currentTarget.nextSibling.firstChild.style = "height: 0.5rem;";
             }
         },
 
         _onHoverRowLeave: function (ev) {
-            if (this.renderInsertLine && ev.currentTarget.nextSibling && !this._isLastInsertRow(ev.currentTarget) && ev.currentTarget.nextSibling.firstChild) {
+            if (
+                this.renderInsertLine &&
+                ev.currentTarget.nextSibling &&
+                ev.currentTarget.nextSibling.firstChild &&
+                !this._isLastInsertRow(ev.currentTarget)
+            ) {
                 ev.currentTarget.nextSibling.firstChild.style = "";
             }
         },
 
         // Avoid to show any option to insert under the last line
         _isLastInsertRow: function (rowElement) {
-            var nextInsertFound;
+            var nextInsertFound = false;
             rowElement = rowElement.nextElementSibling;
-            while (rowElement && (rowElement.classList.contains('all_insert_row') || rowElement.classList.contains('o_data_row')) && !nextInsertFound) {
+            while (!nextInsertFound && rowElement && (rowElement.classList.contains('all_insert_row') || rowElement.classList.contains('o_data_row'))) {
                 rowElement = rowElement.nextElementSibling;
                 if (rowElement.className === 'all_insert_row') {
                     nextInsertFound = true;
@@ -56,26 +66,42 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
             return !nextInsertFound;
         },
 
+        /**
+         * @override
+         * @private
+         */
         _getRecordID: function (rowIndex) {
-            var $tr = this.$('table.o_list_table > tbody > tr').not('.all_insert_row').eq(rowIndex);
+            var $tr;
+            if (this.nextIndex) {
+                $tr = this.$('table.o_list_table > tbody > tr').not('.all_insert_row').eq(rowIndex);
+            } else {
+                $tr = this.$('table.o_list_table > tbody > tr').eq(rowIndex);
+            }
             return $tr.data('id');
         },
 
-        // _getRow: function (recordId) {
-        //     return this.$('.o_data_row[data-id="' + recordId + '"]');
-        // },
-
+        /**
+         * @override
+         */
         editRecord: function (recordID) {
             // And we need this, to focus edition on the new created line, at the correct position
             var rowIndex;
             if (this.nextIndex) {
-                // rowIndex = this.nextIndex + 2;
                 rowIndex = this.nextIndex;
             } else {
                 var $row = this._getRow(recordID);
                 rowIndex = $row.prop('rowIndex') - 1;
             }
             return this._selectCell(rowIndex, 0);
+        },
+
+        /**
+         * @override
+         * @private
+         */
+        _onCellClick: function (event) {
+            this.nextIndex = null;
+            this._super.apply(this, arguments);
         },
 
         _onInsertLine: function (ev) {
@@ -148,6 +174,40 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
             return $tr;
         },
 
+        /**
+         * @override
+         * @private
+         */
+        _renderBody: function () {
+            var self = this;
+            var $body = this._super.apply(this, arguments);
+            if (this.hasHandle) {
+                $body.sortable({
+                    axis: 'y',
+                    items: '> tr.o_data_row',
+                    helper: 'clone',
+                    handle: '.o_row_handle',
+                    stop: function (event, ui) {
+                        // update currentID taking moved line into account
+                        if (self.currentRow !== null) {
+                            var currentID = self.state.data[self.currentRow].id;
+                            self.currentRow = self._getRow(currentID).index();
+                        }
+                        self.unselectRow().then(function () {
+                            // we need to ignore here too the rows that are not of class o_data_row so using the handler to reorder items will work too
+                            var index = self.$('.o_data_row').index(ui.item);
+                            self._moveRecord(ui.item.data('id'), index);
+                        });
+                    },
+                });
+            }
+            return $body;
+        },
+
+        /**
+         * @override
+         * @private
+         */
         _renderRows: function () {
             var $rows = [];
             for (const [i, record] of this.state.data.entries()) {
@@ -187,14 +247,17 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
             return $rows;
         },
 
+        /**
+         * @override
+         */
         confirmUpdate: function (state, id, fields, ev) {
             /*
             * In this method we have added our rows with class '.all_insert_row' inside the logic, but for the rest is the same original method
             */
-            var self = this;
 
-            var oldData = this.state.data;
-            this._setState(state);
+           var oldData = this.state.data;
+           this._setState(state);
+           var self = this;
             return this.confirmChange(state, id, fields, ev).then(function () {
                 // If no record with 'id' can be found in the state, the
                 // confirmChange method will have rerendered the whole view already,
