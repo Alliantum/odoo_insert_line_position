@@ -255,9 +255,9 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
             * In this method we have added our rows with class '.all_insert_row' inside the logic, but for the rest is the same original method
             */
 
-           var oldData = this.state.data;
-           this._setState(state);
-           var self = this;
+            var oldData = this.state.data;
+            this.state = state;
+            var self = this;
             return this.confirmChange(state, id, fields, ev).then(function () {
                 // If no record with 'id' can be found in the state, the
                 // confirmChange method will have rerendered the whole view already,
