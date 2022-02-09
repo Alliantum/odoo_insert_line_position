@@ -5,7 +5,6 @@ odoo.define('odoo_insert_line_position.relational_fields', function (require) {
     const FieldOne2Many = require('web.relational_fields').FieldOne2Many;
 
     FieldOne2Many.include({
-
         /**
          * @override
          */
