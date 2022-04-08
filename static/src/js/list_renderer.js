@@ -109,6 +109,7 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
             ev.stopPropagation();
             var context = ev.currentTarget.dataset.context && ev.currentTarget.dataset.context || {};
             if (this.renderInsertLine && ev.currentTarget.dataset.nextIndex) {
+                this.el.className += " hideHandlers";
                 // We save the nextIndex as a class variable. It will be used by the list_editable_renderer.js.
                 // Also this value in the context too, so ca be read by the basic_model.js
                 context.index = this.nextIndex = parseInt(ev.currentTarget.dataset.nextIndex);
@@ -190,8 +191,13 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
                     stop: function (event, ui) {
                         // update currentID taking moved line into account
                         if (self.currentRow !== null) {
-                            var currentID = self.state.data[self.currentRow].id;
-                            self.currentRow = self._getRow(currentID).index();
+                            if (self.currentRow < self.state.data.length){
+                                var currentID = self.state.data[self.currentRow].id;
+                                self.currentRow = self._getRow(currentID).index();
+                            } else if (self.currentRow/2 < self.state.data.length && Number.isInteger(self.currentRow/2)){
+                                var currentID = self.state.data[self.currentRow / 2].id;
+                                self.currentRow = self._getRow(currentID).index();
+                            }
                         }
                         self.unselectRow().then(function () {
                             // we need to ignore here too the rows that are not of class o_data_row so using the handler to reorder items will work too
@@ -288,6 +294,8 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
 
                     // store the selection range to restore it once the table will
                     // be re-rendered, and the current cell re-selected
+
+                    self.el.className = self.el.className.replace("hideHandlers ", "");
                     var currentRowID;
                     var currentWidget;
                     var focusedElement;
@@ -334,6 +342,11 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
                 });
             });
         },
+
+    _onRemoveIconClick: function (event) {
+        this.el.className = this.el.className.replace("hideHandlers ", "");
+        this._super.apply(this, arguments);
+    },
 
     });
 });

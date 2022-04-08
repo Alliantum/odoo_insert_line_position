@@ -9,7 +9,10 @@
 	text-align: left;
 	transition: height 0.5s, font-size 0.5s ease, height 0.5s ease-in-out, background-color 0.5s ease;
 }
-
+div.hideHandlers tr > td > span.o_row_handle {
+    display: none;
+    opacity: 0;
+}
 .all_insert_cell_icon {
 	margin-left: 0;
 	opacity: 0;
