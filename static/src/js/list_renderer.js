@@ -30,7 +30,16 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
             this.parent = parent;
             this.renderInsertLine = parent.mode === 'edit' && parent.activeActions && parent.activeActions.insert ? true : false;
         },
-
+        _getRealRowIndex: function (self, rowId){
+            var rows = self.$('.o_data_row')
+            var element = self._getRow(rowId);
+            var normalIndex = element.prop('rowIndex')-1;
+            if(normalIndex >= rows.length){
+                return rows.index(element)
+            } else {
+                return normalIndex;
+            }
+        },
         _onHoverRowEnter: function (ev) {
             if (
                 this.renderInsertLine &&
@@ -338,7 +347,7 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
                     });
 
                     if (self.currentRow !== null) {
-                        var newRowIndex = $editedRow.prop('rowIndex') - 1;
+                        var newRowIndex = self._getRealRowIndex(self,$editedRow.id);
                         self.currentRow = newRowIndex;
                         if (switchValue){
                             self.currentRow = switchedValue;
