@@ -300,8 +300,21 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
                     var currentWidget;
                     var focusedElement;
                     var selectionRange;
+                    var switchValue = false;
+                    var switchedValue = 0;
                     if (self.currentRow !== null) {
                         currentRowID = self._getRecordID(self.currentRow);
+
+                        if (currentRowID == undefined){
+                            if (Number.isInteger(self.currentRow/2)){
+                                self.currentRow = self.currentRow/2;
+                            } else{
+                                self.currentRow = self.nextIndex;
+                            }
+                            switchedValue = self.currentRow;
+                            currentRowID = self._getRecordID(self.currentRow);
+                            switchValue = true;
+                        }
                         currentWidget = self.allFieldWidgets[currentRowID][self.currentFieldIndex];
                         if (currentWidget) {
                             focusedElement = currentWidget.getFocusableElement().get(0);
@@ -327,17 +340,20 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
                     if (self.currentRow !== null) {
                         var newRowIndex = $editedRow.prop('rowIndex') - 1;
                         self.currentRow = newRowIndex;
-                        return self._selectCell(newRowIndex, self.currentFieldIndex, {force: true})
-                            .then(function () {
-                                // restore the selection range
-                                currentWidget = self.allFieldWidgets[currentRowID][self.currentFieldIndex];
-                                if (currentWidget) {
-                                    focusedElement = currentWidget.getFocusableElement().get(0);
-                                    if (selectionRange) {
-                                        dom.setSelectionRange(focusedElement, selectionRange);
-                                    }
+                        if (switchValue){
+                            self.currentRow = switchedValue;
+                            newRowIndex = switchedValue;
+                        }
+                        return self._selectCell(newRowIndex, self.currentFieldIndex, {force: true}).then(function () {
+                            // restore the selection range
+                            currentWidget = self.allFieldWidgets[currentRowID][self.currentFieldIndex];
+                            if (currentWidget) {
+                                focusedElement = currentWidget.getFocusableElement().get(0);
+                                if (selectionRange) {
+                                    dom.setSelectionRange(focusedElement, selectionRange);
                                 }
-                            });
+                            }
+                        });
                     }
                 });
             });
