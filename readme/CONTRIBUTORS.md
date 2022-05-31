@@ -1,1 +1,2 @@
 - David Moreno <david.moreno@alliantum.com>
+- Aitor Rosell Torralba <aitor.rosell@alliantum.com>

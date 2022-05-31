@@ -30,7 +30,16 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
             this.parent = parent;
             this.renderInsertLine = parent.mode === 'edit' && parent.activeActions && parent.activeActions.insert ? true : false;
         },
-
+        _getRealRowIndex: function (self, rowId){
+            var rows = self.$('.o_data_row')
+            var element = self._getRow(rowId);
+            var normalIndex = element.prop('rowIndex')-1;
+            if(normalIndex >= rows.length){
+                return rows.index(element)
+            } else {
+                return normalIndex;
+            }
+        },
         _onHoverRowEnter: function (ev) {
             if (
                 this.renderInsertLine &&
@@ -300,8 +309,25 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
                     var currentWidget;
                     var focusedElement;
                     var selectionRange;
+                    var switchValue = false;
+                    var switchedValue = 0;
                     if (self.currentRow !== null) {
-                        currentRowID = self._getRecordID(self.currentRow);
+
+                        currentRowID = self.$('.o_data_row.o_selected_row').data("id");
+                        var currentRowID2 = self._getRecordID(self.currentRow);
+
+                        if (currentRowID == undefined){
+                            if (Number.isInteger(self.currentRow/2)){
+                                self.currentRow = self.currentRow/2;
+                            } else{
+                                self.currentRow = self.nextIndex;
+                            }
+                            switchedValue = self.currentRow;
+                            currentRowID = self._getRecordID(self.currentRow);
+                            switchValue = true;
+                        } else if (currentRowID !== currentRowID2){
+                            self.currentRow = self._getRealRowIndex(self,currentRowID);
+                        }
                         currentWidget = self.allFieldWidgets[currentRowID][self.currentFieldIndex];
                         if (currentWidget) {
                             focusedElement = currentWidget.getFocusableElement().get(0);
@@ -325,19 +351,24 @@ odoo.define('odoo_insert_line_position.InsertableListRenderer', [
                     });
 
                     if (self.currentRow !== null) {
-                        var newRowIndex = $editedRow.prop('rowIndex') - 1;
+                        var newRowIndex = self._getRealRowIndex(self,$editedRow.data('id'));
                         self.currentRow = newRowIndex;
-                        return self._selectCell(newRowIndex, self.currentFieldIndex, {force: true})
-                            .then(function () {
-                                // restore the selection range
-                                currentWidget = self.allFieldWidgets[currentRowID][self.currentFieldIndex];
-                                if (currentWidget) {
+                        if (switchValue){
+                            self.currentRow = switchedValue;
+                            newRowIndex = switchedValue;
+                        }
+                        return self._selectCell(newRowIndex, self.currentFieldIndex, {force: true}).then(function () {
+                            // restore the selection range
+                            currentWidget = self.allFieldWidgets[currentRowID][self.currentFieldIndex];
+                            if (currentWidget) {
+                                if(!focusedElement){
                                     focusedElement = currentWidget.getFocusableElement().get(0);
-                                    if (selectionRange) {
-                                        dom.setSelectionRange(focusedElement, selectionRange);
-                                    }
                                 }
-                            });
+                                if (selectionRange && focusedElement) {
+                                    dom.setSelectionRange(focusedElement, selectionRange);
+                                }
+                            }
+                        });
                     }
                 });
             });

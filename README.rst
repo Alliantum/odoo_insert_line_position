@@ -20,7 +20,7 @@ Insert Lines at Certain Position
     :target: http://www.gnu.org/licenses/agpl-3.0-standalone.html
     :alt: License: AGPL-3
 .. |badge3| image:: https://shields.io/badge/Alliantum%2fodoo_insert_line_position-24c3f3?style=for-the-badge&logo=github&label=github
-    :target: https://github.com/Alliantum/odoo_insert_line_position/tree/master
+    :target: https://github.com/Alliantum/odoo_insert_line_position/tree/14.0
     :alt: Alliantum/odoo_insert_line_position
 
 |badge1| |badge2| |badge3| 
@@ -67,12 +67,6 @@ To use this module, you need to:
    Or just simply inherit an existing xml view with a list, and add the
    ``insert="1"``.
 
-.. image:: ./static/description/xml_view_example.png
-   :alt: Alliantum
-   :width: 100 %
-   :scale: 70 %
-   :align: center
-
 
 Bug Tracker
 ===========
@@ -80,7 +74,7 @@ Bug Tracker
 Bugs are tracked on `GitHub Issues <https://github.com/Alliantum/odoo_insert_line_position/issues>`_.
 In case of trouble, please check there if your issue has already been reported.
 If you spotted it first, help us smashing it by providing a detailed and welcomed
-`feedback <https://github.com/Alliantum/odoo_insert_line_position/issues/new?body=module:%20odoo_insert_line_position%0Aversion:%20master%0A%0A**Steps%20to%20reproduce**%0A-%20...%0A%0A**Current%20behavior**%0A%0A**Expected%20behavior**>`_.
+`feedback <https://github.com/Alliantum/odoo_insert_line_position/issues/new?body=module:%20odoo_insert_line_position%0Aversion:%2014.0%0A%0A**Steps%20to%20reproduce**%0A-%20...%0A%0A**Current%20behavior**%0A%0A**Expected%20behavior**>`_.
 
 Do not contact contributors directly about support or help with technical issues.
 
@@ -96,6 +90,7 @@ Contributors
 ~~~~~~~~~~~~
 
 -  David Moreno david.moreno@alliantum.com
+-  Aitor Rosell Torralba aitor.rosell@alliantum.com
 
 Other credits
 ~~~~~~~~~~~~~
